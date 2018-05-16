@@ -14,14 +14,16 @@ The subproviders can emit new rpc requests in order to handle their own;  e.g. `
 The provider engine also handles caching of rpc request results.
 
 ```js
-const ProviderEngine = require('web3-provider-engine')
-const CacheSubprovider = require('web3-provider-engine/subproviders/cache.js')
-const FixtureSubprovider = require('web3-provider-engine/subproviders/fixture.js')
-const FilterSubprovider = require('web3-provider-engine/subproviders/filters.js')
-const VmSubprovider = require('web3-provider-engine/subproviders/vm.js')
-const HookedWalletSubprovider = require('web3-provider-engine/subproviders/hooked-wallet.js')
-const NonceSubprovider = require('web3-provider-engine/subproviders/nonce-tracker.js')
-const RpcSubprovider = require('web3-provider-engine/subproviders/rpc.js')
+const Web3 = require('web3');
+const ProviderEngine = require('web3-provider-engine');
+const CacheSubprovider = require('web3-provider-engine/subproviders/cache.js');
+const FixtureSubprovider = require('web3-provider-engine/subproviders/fixture.js');
+const FilterSubprovider = require('web3-provider-engine/subproviders/filters.js');
+const VmSubprovider = require('web3-provider-engine/subproviders/vm.js');
+const HookedWalletSubprovider = require('web3-provider-engine/subproviders/hooked-wallet.js');
+const NonceSubprovider = require('web3-provider-engine/subproviders/nonce-tracker.js');
+const RpcSubprovider = require('web3-provider-engine/subproviders/rpc.js');
+const Transaction = require('ethereumjs-tx');
 
 var engine = new ProviderEngine()
 var web3 = new Web3(engine)
@@ -49,9 +51,15 @@ engine.addProvider(new VmSubprovider())
 
 // id mgmt
 engine.addProvider(new HookedWalletSubprovider({
-  getAccounts: function(cb){ ... },
-  approveTransaction: function(cb){ ... },
-  signTransaction: function(cb){ ... },
+      getAccounts: function(cb){
+        cb(null, [<YOUR ADDRESS>])
+      },
+      signTransaction: function(txParams, cb){
+        var tx = new Transaction(txParams);
+        tx.sign(<YOUR PRIVATE KEY>);
+        var rawTx = '0x'+tx.serialize().toString('hex');
+        cb(null, rawTx);
+      }
 }))
 
 // data source
